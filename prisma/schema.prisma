@@ -1,5 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+//Я вибрав прізму, бо на мою думку вона є кращою та надійнішою за Serielize та мені з неї звичніше працювати
 
 generator client {
   provider = "prisma-client-js"

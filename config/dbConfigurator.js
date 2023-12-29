@@ -3,7 +3,8 @@
 const { PrismaClient } = require("@prisma/client");
 const { prismaService } = require("../services/prismaService");
 const prisma = new PrismaClient();
-
+/*Цей модуль створений для взаємодії вже нашої БД постгресу, він приймає дані, які отримує наш sheetDB з таблиці
+та вносить ці дані в таблицю, перевіряючи чи існують такі моделі та продукти. Також воно оновлює розмури */
 
 async function configurateModelsDB(models) {
   for (const model of models) {
@@ -46,6 +47,7 @@ async function configurateProductsDB(product, model) {
       });
     }
 
+    /*Оновлюємо наявність розмірів взуття */
     const sizes = Object.keys(product.sizes);
     for (const size of sizes) {
       let isAvailable = false;

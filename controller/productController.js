@@ -10,6 +10,8 @@ const productController = {
     res.send(products); 
   },
 
+  /*В цьому методі я вирішив також повертати і назву моделі і доступні розміри. Це логічно, якщо ми хочемо
+  отримати дані про певний товар, то, напевно, хочемо отримати повну інформацію. Невеликий бонус*/
   async getById(req, res) {
     const id = parseInt(req.params.id);
     const product = await prismaService.product.findUnique({
@@ -19,7 +21,8 @@ const productController = {
     product.sizes = await sizeService.getSizesOfProduct(product.id);
     res.send(product);
   },
-
+  
+  /*Метод працює правильно і відображає всі продукти взуття з таким доступним розміром */
   async getProductsBySize(req, res) {
     const size = req.params.size;
     const sizes = await prismaService.productSizes.findMany({

@@ -1,21 +1,27 @@
 'use strict';
 
+/* Для отримання даних з онлайн таблиці я використав сервіси Google Cloud і пакет 
+googleapis*/
 const { google } = require('googleapis');
 const { GoogleAuth } = require('google-auth-library');
 const sheetConfig = require('../config/sheetConfig.json');
 const { configurateModelsDB, configurateProductsDB } = require('../config/dbConfigurator');
+//Через спеціфічність таблиці, я також використовував алфавіт
 const { alpabet } = require('../utils/alphabet');
 
+/*Наші важливі зміні. apiKey- це шлях з цього файлу до файлів з секретами, тобто ключами для 
+використання Google sheet API */
 const apiKey = process.env.GOOGLE_APPLICATION_CREDENTIAL;
 const sheetId = process.env.SHEED_ID;
 const credentials = require(apiKey);
-
+/*Виділив авторизацію до нашої таблиці */
 const auth = new GoogleAuth({
   credentials,
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 const sheets = google.sheets({ version: 'v4', auth });
-
+/*Для отримання моделей я зробив окрему функцію, адже вона має трохи інший механізм роботи
+ніж функція для отримання певних клітинок */
 async function getSheetTitles() {
 
   try {
@@ -31,7 +37,7 @@ async function getSheetTitles() {
     console.error('Error retrieving sheet titles:', error.message);
   }
 }
-
+/*Функція для отримання клітинок у певному діапазоні */
 async function getGoogleSheetData(range) {
   try {
     const response = await sheets.spreadsheets.values.get({
@@ -45,13 +51,10 @@ async function getGoogleSheetData(range) {
     console.error('Error retrieving data:', error.message);
   }
 }
-
-async function condigurModels() {
-  const models = await getSheetTitles();
-  configurateModelsDB(models);
-  return models;
-}
-
+/*Досить специфічна функція для такого ж специфічного завдання. Через потребу у переносі даних
+з онлайн таблиці, де дані йдуть не зверху вниз, а зліва направо я вирішив рахувати кількість
+товарів у таблиці (вони можуть бути в діапазоні від А до Z), щоб потім навпомацки не знаходити
+де лежать наші товари, а одразу отримувати їх кількість */
 async function getProductsCount(model) {
   try {
     const response = await sheets.spreadsheets.values.get({
@@ -74,7 +77,19 @@ async function getProductsCount(model) {
     throw error;
   }
 }
-
+/*Конфігурація моделей винесена в окрему функцію, бо вона має посилатися на назви листів, а не 
+зміст клітинок. Ця функція відслідковує появу нових таблиць */
+async function condigurModels() {
+  const models = await getSheetTitles();
+  configurateModelsDB(models);
+  return models;
+}
+/*Конфігурація продуктів з онлайн таблиці передає одразу дані про товар і про його розміри.
+Я намагався зробити таке рішення, щоб таблиця могла дійсно відслідковувати нові товари. Для цього
+потрібно тримати її певну структуру. Проте інколи може бути таке, що дані змінять своє положення,
+для цього я створив sheetConfig у папці config, де ми приблизно описуємо програмі нашу таблицю.
+Більшість таких моментів викликані нестандартим поданням даних в таблиці, до яких я намагався 
+підлаштуватися */
 async function configurProducts(model) {
   const pos = sheetConfig.dataPositions;
   const productCount = await getProductsCount(model);
@@ -103,7 +118,7 @@ async function configurProducts(model) {
   }
   console.log(data);
 }
-
+/*Головна функція, яку ми виносимо звідси і викликаємо для первинних і подальщих конфігурацій таблиці з БД */
 async function configurateDataWithSheet() {
   const models = await condigurModels();
   for(const model of models) {
