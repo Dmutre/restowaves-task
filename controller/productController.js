@@ -21,7 +21,7 @@ const productController = {
     product.sizes = await sizeService.getSizesOfProduct(product.id);
     res.send(product);
   },
-  
+
   /*Метод працює правильно і відображає всі продукти взуття з таким доступним розміром */
   async getProductsBySize(req, res) {
     const size = req.params.size;
@@ -36,7 +36,39 @@ const productController = {
       products.push(product);
     }
     res.send(products);
-  }
+  },
+
+  async getByBrand(req, res) {
+    const brandId = Number(req.params.brandId);
+    const models = await prismaService.model.findMany({
+      where: {brandId: brandId}
+    });
+
+    console.log(models);
+
+    const products = await Promise.all(models.map(async (model) => {
+      const modelProducts = await prismaService.product.findMany({
+        where: { modelId: model.id }
+      });
+      return { model, products: modelProducts };
+    }));
+
+    return res.send(products);
+  },
+
+  async getByCategory(req, res) {
+    const categoryId = Number(req.params.categoryId);
+    const models = await prismaService.model.findMany({
+      where: {categoryId: categoryId}
+    });
+    const products = await Promise.all(models.map(async (model) => {
+      const modelProducts = await prismaService.product.findMany({
+        where: { modelId: model.id }
+      });
+      return { model, products: modelProducts };
+    }));
+    return res.send(products);
+  },
 }
 
 module.exports = { 
